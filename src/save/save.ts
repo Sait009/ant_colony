@@ -44,6 +44,8 @@ export const localStorageAdapter: SaveStorage = {
 export const MIGRATIONS: Record<number, (w: Record<string, unknown>) => Record<string, unknown>> = {
   // v1 -> v2: rooms were added
   1: (w) => ({ ...w, rooms: [] }),
+  // v2 -> v3: technologies were added
+  2: (w) => ({ ...w, techs: [] }),
 };
 
 export function serialize(w: World, now = Date.now()): string {

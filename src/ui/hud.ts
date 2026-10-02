@@ -2,12 +2,13 @@ import { BALANCE } from '../data/balance';
 import { ANTS, UPGRADES } from '../data/defs';
 import { canAfford } from '../sim/commands';
 import type { GameEvent } from '../sim/events';
-import { popCap, storageCap } from '../sim/stats';
+import { isUnlocked, popCap, storageCap } from '../sim/stats';
 import type { Command } from '../sim/commands';
 import type { Cost, World } from '../sim/types';
 import type { Game } from '../game/game';
 import { t } from './i18n';
 import type { RoomsPanel } from './rooms';
+import type { TechPanel } from './tech';
 
 const $ = <T extends HTMLElement>(id: string): T => document.getElementById(id) as T;
 
@@ -16,6 +17,8 @@ interface ActionBtn {
   cmd: Command;
   cost: (w: World) => Cost;
   available: (w: World) => boolean;
+  /** hide the button entirely (e.g. locked units) */
+  visible?: (w: World) => boolean;
   sub: (w: World) => string;
 }
 
@@ -29,6 +32,7 @@ export class Hud {
   constructor(
     private readonly game: Game,
     private readonly rooms: RoomsPanel,
+    private readonly tech: TechPanel,
   ) {
     this.buildPanel();
     this.bindControls();
@@ -50,6 +54,7 @@ export class Hud {
     for (const def of Object.values(ANTS)) {
       this.addAction(def.icon, t(`ant.${def.id}.name`), {
         cmd: { type: 'spawnAnt', ant: def.id },
+        visible: (w) => isUnlocked(w, def.id),
         cost: () => def.cost,
         available: (w) => w.ants.length < popCap(w),
         sub: () => t(`ant.${def.id}.desc`),
@@ -64,6 +69,10 @@ export class Hud {
           `Lv ${w.upgrades[def.id] + (def.id === 'nest' ? 1 : 0)}/${def.max + (def.id === 'nest' ? 1 : 0)}`,
       });
     }
+    const techBtn = document.createElement('button');
+    techBtn.innerHTML = `<span class="n">🔬 ${t('ui.tech')}</span><span class="s">${t('tech.title')}</span><span class="c">&nbsp;</span>`;
+    techBtn.addEventListener('click', () => this.tech.toggle());
+    $('panel').appendChild(techBtn);
     const roomsBtn = document.createElement('button');
     roomsBtn.innerHTML = `<span class="n">🏛️ ${t('ui.rooms')}</span><span class="s">${t('rooms.title')}</span><span class="c">&nbsp;</span>`;
     roomsBtn.addEventListener('click', () => this.rooms.toggle());
@@ -147,7 +156,9 @@ export class Hud {
     const hp = Math.max(0, w.nest.hp);
     $('hpbar').style.width = `${(hp / w.nest.maxHp) * 100}%`;
     $('hptext').textContent = `${t('ui.nest')} ${Math.ceil(hp)}/${w.nest.maxHp}`;
+    this.tech.refresh();
     for (const a of this.actions) {
+      a.el.hidden = a.visible ? !a.visible(w) : false;
       const cost = a.cost(w);
       const ok = a.available(w);
       a.el.disabled = !ok || !canAfford(w, cost);

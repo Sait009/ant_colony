@@ -1,4 +1,4 @@
-import type { AntId, Cost, EnemyId, ResourceId, RoomId, UpgradeId } from '../sim/types';
+import type { AntId, Cost, EnemyId, ResourceId, RoomId, TechId, UpgradeId } from '../sim/types';
 
 export interface ResourceDef {
   id: ResourceId;
@@ -20,6 +20,8 @@ export interface AntDef {
   id: AntId;
   role: AntRole;
   icon: string;
+  /** body colour (render) */
+  color: number;
   hp: number;
   speed: number;
   cost: Cost;
@@ -27,6 +29,12 @@ export interface AntDef {
   scale: number;
   damage: number;
   cooldown: number;
+  /** attack range in px; 0 = melee */
+  range: number;
+  /** multiplies carried amount (gatherers) */
+  carryMul: number;
+  /** technology required before this ant can be trained */
+  requires?: TechId;
 }
 
 export const ANTS: Record<AntId, AntDef> = {
@@ -34,23 +42,74 @@ export const ANTS: Record<AntId, AntDef> = {
     id: 'worker',
     role: 'gatherer',
     icon: '🐜',
+    color: 0x2b1a12,
     hp: 10,
     speed: 62,
     cost: { food: 10 },
     scale: 1,
     damage: 0,
     cooldown: 0,
+    range: 0,
+    carryMul: 1,
+  },
+  forager: {
+    id: 'forager',
+    role: 'gatherer',
+    icon: '🧺',
+    color: 0x6b4a22,
+    hp: 8,
+    speed: 92,
+    cost: { food: 18 },
+    scale: 0.9,
+    damage: 0,
+    cooldown: 0,
+    range: 0,
+    carryMul: 1.5,
+    requires: 'foraging',
   },
   soldier: {
     id: 'soldier',
     role: 'fighter',
     icon: '⚔️',
+    color: 0x8c2a1c,
     hp: 40,
     speed: 55,
     cost: { food: 25, twigs: 5 },
     scale: 1.25,
     damage: 8,
     cooldown: 0.6,
+    range: 0,
+    carryMul: 1,
+  },
+  spitter: {
+    id: 'spitter',
+    role: 'fighter',
+    icon: '💦',
+    color: 0x2f7f8c,
+    hp: 25,
+    speed: 55,
+    cost: { food: 30, twigs: 15 },
+    scale: 1.1,
+    damage: 6,
+    cooldown: 0.9,
+    range: 85,
+    carryMul: 1,
+    requires: 'acid',
+  },
+  bulldog: {
+    id: 'bulldog',
+    role: 'fighter',
+    icon: '🪖',
+    color: 0x4a1010,
+    hp: 130,
+    speed: 42,
+    cost: { food: 55, twigs: 35 },
+    scale: 1.7,
+    damage: 16,
+    cooldown: 0.8,
+    range: 0,
+    carryMul: 1,
+    requires: 'heavy',
   },
 };
 
@@ -155,5 +214,63 @@ export const ROOMS: Record<RoomId, RoomDef> = {
     minNestLevel: 2,
     cost: (l) => ({ food: 40 * (l + 1), twigs: 40 * (l + 1) }),
     perLevel: { popCap: 4, soldierHp: 0.5 },
+  },
+};
+
+/** Additive modifiers granted by technologies. */
+export interface TechMods {
+  /** flat extra carry per trip */
+  carry: number;
+  /** fraction faster gatherer movement */
+  gatherSpeed: number;
+  /** fraction bonus HP for newly trained ants */
+  hp: number;
+  /** fraction bonus damage for all fighters */
+  damage: number;
+}
+
+export interface TechDef {
+  id: TechId;
+  icon: string;
+  /** column in the tree (display) */
+  tier: number;
+  cost: Cost;
+  requires: TechId[];
+  mods?: Partial<TechMods>;
+}
+
+export const TECHS: Record<TechId, TechDef> = {
+  foraging: { id: 'foraging', icon: '🧭', tier: 1, cost: { food: 40 }, requires: [] },
+  acid: { id: 'acid', icon: '🧪', tier: 1, cost: { food: 50, twigs: 30 }, requires: [] },
+  chitin: {
+    id: 'chitin',
+    icon: '🦴',
+    tier: 1,
+    cost: { food: 60, twigs: 40 },
+    requires: [],
+    mods: { hp: 0.2 },
+  },
+  logistics: {
+    id: 'logistics',
+    icon: '🎒',
+    tier: 2,
+    cost: { food: 60, twigs: 30 },
+    requires: ['foraging'],
+    mods: { carry: 2, gatherSpeed: 0.15 },
+  },
+  venom: {
+    id: 'venom',
+    icon: '☠️',
+    tier: 2,
+    cost: { food: 80, twigs: 60 },
+    requires: ['acid'],
+    mods: { damage: 0.2 },
+  },
+  heavy: {
+    id: 'heavy',
+    icon: '🪲',
+    tier: 3,
+    cost: { food: 100, twigs: 80 },
+    requires: ['chitin', 'acid'],
   },
 };

@@ -1,8 +1,8 @@
 import { clamp, type Vec2 } from '../core/math';
 import { BALANCE } from '../data/balance';
-import { ANTS, ROOMS, UPGRADES } from '../data/defs';
-import { nestLevel, popCap, roomSlots } from './stats';
-import type { AntId, Cost, RoomId, UpgradeId, World } from './types';
+import { ANTS, ROOMS, TECHS, UPGRADES } from '../data/defs';
+import { isUnlocked, nestLevel, popCap, roomSlots } from './stats';
+import type { AntId, Cost, RoomId, TechId, UpgradeId, World } from './types';
 import { spawnAnt } from './world';
 
 /** Every player intent goes through a command: easy to validate, record, replay and sync later. */
@@ -10,6 +10,7 @@ export type Command =
   | { type: 'spawnAnt'; ant: AntId }
   | { type: 'buyUpgrade'; id: UpgradeId }
   | { type: 'repair' }
+  | { type: 'research'; id: TechId }
   | { type: 'buildRoom'; kind: RoomId }
   | { type: 'upgradeRoom'; roomId: number }
   | { type: 'setRally'; pos: Vec2 }
@@ -27,7 +28,8 @@ export type CommandResult =
         | 'notFound'
         | 'full'
         | 'noSlot'
-        | 'locked';
+        | 'locked'
+        | 'owned';
     };
 
 export const canAfford = (w: World, c: Cost): boolean =>
@@ -49,6 +51,7 @@ export function applyCommand(w: World, cmd: Command): CommandResult {
   switch (cmd.type) {
     case 'spawnAnt': {
       const def = ANTS[cmd.ant];
+      if (!isUnlocked(w, cmd.ant)) return fail(w, 'locked');
       if (w.ants.length >= popCap(w)) return fail(w, 'popCap');
       if (!canAfford(w, def.cost)) return fail(w, 'noResources');
       pay(w, def.cost);
@@ -81,6 +84,17 @@ export function applyCommand(w: World, cmd: Command): CommandResult {
       if (!canAfford(w, BALANCE.repair.cost)) return fail(w, 'noResources');
       pay(w, BALANCE.repair.cost);
       w.nest.hp = Math.min(w.nest.maxHp, w.nest.hp + BALANCE.repair.amount);
+      w.events.push({ type: 'sfx', id: 'upgrade' });
+      return { ok: true };
+    }
+    case 'research': {
+      const def = TECHS[cmd.id];
+      if (w.techs.includes(cmd.id)) return fail(w, 'owned');
+      if (!def.requires.every((r) => w.techs.includes(r))) return fail(w, 'locked');
+      if (!canAfford(w, def.cost)) return fail(w, 'noResources');
+      pay(w, def.cost);
+      w.techs.push(cmd.id);
+      w.events.push({ type: 'toast', key: 'toast.researched', params: { tech: cmd.id } });
       w.events.push({ type: 'sfx', id: 'upgrade' });
       return { ok: true };
     }

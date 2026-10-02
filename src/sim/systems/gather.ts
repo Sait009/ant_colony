@@ -3,7 +3,7 @@ import { BALANCE } from '../../data/balance';
 import { ANTS } from '../../data/defs';
 import { moveToward } from '../movement';
 import { addResource } from '../resources';
-import { carryCap, nestRadius } from '../stats';
+import { antSpeed, carryOf, nestRadius } from '../stats';
 import type { Ant, ResourceNode, World } from '../types';
 import type { TickContext } from './context';
 
@@ -26,7 +26,7 @@ function findNode(w: World, ant: Ant, ctx: TickContext): ResourceNode | null {
 }
 
 function updateGatherer(w: World, a: Ant, dt: number, ctx: TickContext): void {
-  const speed = ANTS[a.kind].speed;
+  const speed = antSpeed(w, a);
 
   if (a.carry > 0 && a.carryType) {
     if (moveToward(a, w.nest.x, w.nest.y, speed, dt, nestRadius(w) * 0.7)) {
@@ -51,7 +51,7 @@ function updateGatherer(w: World, a: Ant, dt: number, ctx: TickContext): void {
   if (a.gatherTimer > 0) {
     a.gatherTimer -= dt;
     if (a.gatherTimer <= 0 && target) {
-      const n = Math.min(carryCap(w), Math.ceil(target.amount));
+      const n = Math.min(carryOf(w, a), Math.ceil(target.amount));
       target.amount -= n;
       a.carry = n;
       a.carryType = target.type;

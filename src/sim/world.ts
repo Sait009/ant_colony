@@ -2,11 +2,11 @@ import { clamp } from '../core/math';
 import { nextFloat, randRange } from '../core/rng';
 import { BALANCE } from '../data/balance';
 import { ANTS, RESOURCES } from '../data/defs';
-import { nestRadius, roomMods } from './stats';
+import { nestRadius, roomMods, techMods } from './stats';
 import type { Ant, AntId, ResourceId, ResourceNode, World } from './types';
 
 /** Bump when the shape of `World` changes and add a migration in save/migrations.ts. */
-export const WORLD_VERSION = 2;
+export const WORLD_VERSION = 3;
 
 export function createWorld(seed: number): World {
   const c = BALANCE.worldSize / 2;
@@ -21,6 +21,7 @@ export function createWorld(seed: number): World {
     upgrades: { nest: 0, carry: 0, weapon: 0 },
     nest: { x: c, y: c, hp: 200, maxHp: 200 },
     rooms: [],
+    techs: [],
     rally: { x: c + 110, y: c + 40 },
     ants: [],
     enemies: [],
@@ -70,7 +71,7 @@ export function spawnAnt(w: World, kind: AntId): Ant {
   const def = ANTS[kind];
   const a = randRange(w, 0, Math.PI * 2);
   const r = nestRadius(w);
-  const hp = kind === 'soldier' ? def.hp * (1 + roomMods(w).soldierHp) : def.hp;
+  const hp = def.hp * (1 + techMods(w).hp + (def.role === 'fighter' ? roomMods(w).soldierHp : 0));
   const ant: Ant = {
     id: w.nextId++,
     kind,

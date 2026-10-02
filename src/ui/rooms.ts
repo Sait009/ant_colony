@@ -13,7 +13,11 @@ export class RoomsPanel {
   private readonly el = document.getElementById('rooms') as HTMLDivElement;
   private sig = '';
 
-  constructor(private readonly game: Game) {
+  constructor(
+    private readonly game: Game,
+    /** closes the sibling panel so the two do not overlap */
+    private readonly onOpen: () => void,
+  ) {
     this.el.addEventListener('click', (e) => {
       const btn = (e.target as HTMLElement).closest('button');
       if (!btn || btn.disabled) return;
@@ -26,8 +30,13 @@ export class RoomsPanel {
     });
   }
 
+  close(): void {
+    this.el.hidden = true;
+  }
+
   toggle(): void {
     this.el.hidden = !this.el.hidden;
+    if (!this.el.hidden) this.onOpen();
     this.sig = '';
     this.refresh();
   }

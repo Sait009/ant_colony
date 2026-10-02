@@ -11,5 +11,6 @@ export type GameEvent =
     }
   | { type: 'float'; x: number; y: number; text: string; color: string }
   | { type: 'sfx'; id: SfxId }
+  | { type: 'shot'; x1: number; y1: number; x2: number; y2: number }
   | { type: 'waveStart'; number: number; dir: Direction }
   | { type: 'ended'; won: boolean };

@@ -3,7 +3,8 @@ import { BALANCE } from '../src/data/balance';
 import { applyCommand } from '../src/sim/commands';
 import { SIM_DT, step } from '../src/sim/step';
 import { popCap } from '../src/sim/stats';
-import { createWorld } from '../src/sim/world';
+import { carryOf } from '../src/sim/stats';
+import { createWorld, spawnAnt } from '../src/sim/world';
 import { deserialize, serialize } from '../src/save/save';
 import type { World } from '../src/sim/types';
 
@@ -178,6 +179,93 @@ describe('save migration', () => {
     delete old.world.rooms;
     const loaded = deserialize(JSON.stringify(old))!;
     expect(loaded.rooms).toEqual([]);
-    expect(loaded.version).toBe(2);
+    expect(loaded.version).toBe(3);
+  });
+});
+
+describe('technology & unit variety', () => {
+  const rich = () => {
+    const w = createWorld(1);
+    w.res.food = 999;
+    w.res.twigs = 999;
+    return w;
+  };
+
+  it('gates units behind their technology', () => {
+    const w = rich();
+    expect(applyCommand(w, { type: 'spawnAnt', ant: 'spitter' })).toEqual({
+      ok: false,
+      reason: 'locked',
+    });
+    expect(applyCommand(w, { type: 'research', id: 'acid' }).ok).toBe(true);
+    expect(applyCommand(w, { type: 'spawnAnt', ant: 'spitter' }).ok).toBe(true);
+  });
+
+  it('enforces tech prerequisites and prevents double research', () => {
+    const w = rich();
+    expect(applyCommand(w, { type: 'research', id: 'logistics' })).toEqual({
+      ok: false,
+      reason: 'locked',
+    });
+    applyCommand(w, { type: 'research', id: 'foraging' });
+    expect(applyCommand(w, { type: 'research', id: 'foraging' })).toEqual({
+      ok: false,
+      reason: 'owned',
+    });
+    expect(applyCommand(w, { type: 'research', id: 'logistics' }).ok).toBe(true);
+  });
+
+  it('chitin boosts HP of newly trained ants only', () => {
+    const w = rich();
+    const before = w.ants.find((a) => a.kind === 'soldier')!.maxHp;
+    applyCommand(w, { type: 'research', id: 'chitin' });
+    applyCommand(w, { type: 'spawnAnt', ant: 'soldier' });
+    const fresh = w.ants[w.ants.length - 1]!;
+    expect(fresh.maxHp).toBeCloseTo(before * 1.2);
+    expect(w.ants.find((a) => a.kind === 'soldier')!.maxHp).toBe(before);
+  });
+
+  it('spitters attack from range without closing in', () => {
+    const w = createWorld(5);
+    w.ants = [];
+    w.techs.push('acid');
+    const s = spawnAnt(w, 'spitter');
+    s.x = 1000;
+    s.y = 1000;
+    w.enemies.push({
+      id: 999,
+      kind: 'beetle',
+      x: 1070,
+      y: 1000,
+      angle: 0,
+      walk: 0,
+      hp: 120,
+      maxHp: 120,
+      cd: 5,
+      dmg: 0,
+    });
+    for (let i = 0; i < 30; i++) step(w);
+    const e = w.enemies[0]!;
+    expect(e.hp).toBeLessThan(120);
+    // already inside its 85px range, so the spitter shoots without moving
+    expect(s.x).toBeCloseTo(1000);
+    expect(s.y).toBeCloseTo(1000);
+    expect(w.events.some((ev) => ev.type === 'shot')).toBe(true);
+  });
+
+  it('foragers carry more than workers', () => {
+    const w = createWorld(1);
+    const forager = spawnAnt(w, 'forager');
+    const worker = w.ants.find((a) => a.kind === 'worker')!;
+    expect(carryOf(w, forager)).toBeGreaterThan(carryOf(w, worker));
+  });
+
+  it('migrates v2 saves by adding techs', () => {
+    const old = JSON.parse(serialize(createWorld(3)));
+    old.v = 2;
+    delete old.world.techs;
+    const loaded = deserialize(JSON.stringify(old))!;
+    expect(loaded.techs).toEqual([]);
+    expect(loaded.version).toBe(3);
   });
 });

@@ -2,9 +2,10 @@ import type { Vec2 } from '../core/math';
 import type { GameEvent } from './events';
 
 export type ResourceId = 'food' | 'twigs';
-export type AntId = 'worker' | 'soldier';
+export type AntId = 'worker' | 'forager' | 'soldier' | 'spitter' | 'bulldog';
 export type EnemyId = 'spider' | 'beetle' | 'wasp';
 export type UpgradeId = 'nest' | 'carry' | 'weapon';
+export type TechId = 'foraging' | 'logistics' | 'acid' | 'venom' | 'chitin' | 'heavy';
 export type RoomId = 'farm' | 'nursery' | 'storage' | 'barracks';
 export type Cost = Partial<Record<ResourceId, number>>;
 
@@ -67,6 +68,8 @@ export interface World {
   upgrades: Record<UpgradeId, number>;
   nest: Nest;
   rooms: Room[];
+  /** researched technologies */
+  techs: TechId[];
   rally: Vec2;
   ants: Ant[];
   enemies: Enemy[];

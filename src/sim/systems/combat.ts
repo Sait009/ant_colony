@@ -16,10 +16,12 @@ function updateFighter(w: World, a: Ant, dt: number, ctx: TickContext): void {
     ctx.enemyGrid.nearest(a.x, a.y, AGGRO_RANGE) ??
     ctx.enemyGrid.nearest(w.nest.x, w.nest.y, nestRadius(w) + NEST_GUARD_RANGE);
   if (e) {
-    const arrived = moveToward(a, e.x, e.y, def.speed * 1.1, dt, ENEMIES[e.kind].radius + 6);
+    const stop = def.range > 0 ? def.range : ENEMIES[e.kind].radius + 6;
+    const arrived = moveToward(a, e.x, e.y, def.speed * 1.1, dt, stop);
     if (arrived && a.cd <= 0) {
       e.hp -= def.damage * damageMul(w);
       a.cd = def.cooldown;
+      if (def.range > 0) w.events.push({ type: 'shot', x1: a.x, y1: a.y, x2: e.x, y2: e.y });
       w.events.push({ type: 'sfx', id: 'hit' });
     }
     return;

@@ -67,6 +67,7 @@ export class Renderer {
   private hpBars = new Graphics();
   private floaters: Floater[] = [];
   private floatLayer = new Container();
+  private shots: Array<{ x1: number; y1: number; x2: number; y2: number; life: number }> = [];
 
   async init(): Promise<void> {
     await this.app.init({
@@ -211,6 +212,11 @@ export class Renderer {
     }
   }
 
+  /** Short-lived projectile trail for ranged attacks. */
+  shot(x1: number, y1: number, x2: number, y2: number): void {
+    if (this.shots.length < 60) this.shots.push({ x1, y1, x2, y2, life: 0.18 });
+  }
+
   /** Spawn a floating label (resource pickup etc.). */
   floatText(x: number, y: number, text: string, color: string): void {
     const t = new Text({
@@ -263,6 +269,13 @@ export class Renderer {
       g.rect(b.x - width / 2, b.y - 16, width, 3).fill({ color: 0x000000, alpha: 0.6 });
       g.rect(b.x - width / 2, b.y - 16, (width * b.hp) / b.maxHp, 3).fill(0xe0594a);
     };
+    for (const s of this.shots) {
+      s.life -= frameDt;
+      g.moveTo(s.x1, s.y1)
+        .lineTo(s.x2, s.y2)
+        .stroke({ width: 2, color: 0x7fe0a0, alpha: Math.max(0, s.life / 0.18) });
+    }
+    this.shots = this.shots.filter((s) => s.life > 0);
     for (const a of w.ants) bar(a, 14);
     for (const e of w.enemies) bar(e, 22);
 

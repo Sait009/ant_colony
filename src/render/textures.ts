@@ -1,4 +1,6 @@
 import { Graphics, Rectangle, Texture, type Renderer } from 'pixi.js';
+import { ANTS } from '../data/defs';
+import type { AntId } from '../sim/types';
 import { rand } from './util';
 
 /**
@@ -8,7 +10,7 @@ import { rand } from './util';
 export interface TextureSet {
   grass: Texture;
   nest: Texture;
-  ant: Record<'worker' | 'soldier' | 'queen', [Texture, Texture]>;
+  ant: Record<AntId | 'queen', [Texture, Texture]>;
   enemy: Record<'spider' | 'beetle' | 'wasp', [Texture, Texture]>;
   node: Record<'food' | 'twigs', Texture>;
   carry: Texture;
@@ -64,6 +66,10 @@ function makeGrass(): Texture {
 }
 
 export function buildTextures(r: Renderer): TextureSet {
+  const ant = { queen: pair(r, 16, (g, p) => drawAnt(g, p, 0x7a1f3d)) } as TextureSet['ant'];
+  for (const def of Object.values(ANTS)) {
+    ant[def.id] = pair(r, 16, (g, p) => drawAnt(g, p, def.color));
+  }
   return {
     grass: makeGrass(),
     nest: bake(
@@ -77,11 +83,7 @@ export function buildTextures(r: Renderer): TextureSet {
       },
       1,
     ),
-    ant: {
-      worker: pair(r, 16, (g, p) => drawAnt(g, p, 0x2b1a12)),
-      soldier: pair(r, 16, (g, p) => drawAnt(g, p, 0x8c2a1c)),
-      queen: pair(r, 16, (g, p) => drawAnt(g, p, 0x7a1f3d)),
-    },
+    ant,
     enemy: {
       spider: pair(r, 20, (g, p) => {
         const sw = p ? 3 : -3;

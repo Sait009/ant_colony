@@ -5,6 +5,7 @@ import { BALANCE } from './data/balance';
 import { Hud } from './ui/hud';
 import { Overlay } from './ui/overlay';
 import { RoomsPanel } from './ui/rooms';
+import { TechPanel } from './ui/tech';
 
 async function main(): Promise<void> {
   const game = new Game();
@@ -12,7 +13,9 @@ async function main(): Promise<void> {
   await renderer.init();
   const cam = renderer.camera;
 
-  const hud = new Hud(game, new RoomsPanel(game));
+  const rooms: RoomsPanel = new RoomsPanel(game, () => tech.close());
+  const tech: TechPanel = new TechPanel(game, () => rooms.close());
+  const hud = new Hud(game, rooms, tech);
   const overlay = new Overlay(
     {
       onNew: () => start(() => game.newGame()),
@@ -39,6 +42,7 @@ async function main(): Promise<void> {
 
   game.onEvent((e) => {
     hud.handleEvent(e);
+    if (e.type === 'shot') renderer.shot(e.x1, e.y1, e.x2, e.y2);
     if (e.type === 'float') renderer.floatText(e.x, e.y, e.text, e.color);
     if (e.type === 'ended') overlay.showEnd(e.won, game.world.wave.number, game.world.time);
   });

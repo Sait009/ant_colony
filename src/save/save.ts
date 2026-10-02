@@ -41,8 +41,10 @@ export const localStorageAdapter: SaveStorage = {
 };
 
 /** Each entry upgrades a world saved at version N to N+1. */
-export const MIGRATIONS: Record<number, (w: Record<string, unknown>) => Record<string, unknown>> =
-  {};
+export const MIGRATIONS: Record<number, (w: Record<string, unknown>) => Record<string, unknown>> = {
+  // v1 -> v2: rooms were added
+  1: (w) => ({ ...w, rooms: [] }),
+};
 
 export function serialize(w: World, now = Date.now()): string {
   const rest: Partial<World> = { ...w };

@@ -32,9 +32,14 @@ tests/      vitest
 ```
 กฎสำคัญ: `sim/` ห้าม import จาก `render/ ui/ audio/ game/` และห้ามใช้ `Math.random()` (ใช้ `core/rng`)
 
+## Branch & Deploy
+- `main` = production (Vercel deploy อัตโนมัติ) · `dev` = พัฒนา/preview
+- ทำงานบน `dev` → ผ่าน CI (typecheck, lint, test, build) → merge เข้า `main` เพื่อปล่อย
+- Vercel: Framework = Vite, build `npm run build`, output `dist`
+
 ## Roadmap
 1. ✅ รากฐาน TS + Pixi + save + test (เฟสนี้)
-2. ห้อง/โครงสร้างในรัง
+2. ✅ ห้องในรัง (ฟาร์มเชื้อรา, ห้องฟักไข่, คลัง, ค่ายทหาร)
 3. ต้นไม้เทคโนโลยี + มดหลายชนิด
 4. Pheromone / pathfinding
 5. แผนที่ + ภารกิจ + ภาคผจญภัย

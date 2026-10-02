@@ -3,6 +3,8 @@ export const BALANCE = {
   worldSize: 2400,
   start: { food: 50, twigs: 10, workers: 4, soldiers: 2 },
   baseCap: 10,
+  baseStorage: 300,
+  baseRoomSlots: 2,
   capPerNestLevel: 8,
   eggInterval: 20,
   firstWave: 45,

@@ -1,4 +1,4 @@
-import type { AntId, Cost, EnemyId, ResourceId, UpgradeId } from '../sim/types';
+import type { AntId, Cost, EnemyId, ResourceId, RoomId, UpgradeId } from '../sim/types';
 
 export interface ResourceDef {
   id: ResourceId;
@@ -93,5 +93,67 @@ export const UPGRADES: Record<UpgradeId, UpgradeDef> = {
     icon: '🗡️',
     max: 5,
     cost: (l) => ({ food: 25 * (l + 1), twigs: 10 * (l + 1) }),
+  },
+};
+
+/** Additive stat modifiers granted by rooms (per level). */
+export interface Mods {
+  /** passive food income per second */
+  foodPerSec: number;
+  /** fraction faster egg laying */
+  eggSpeed: number;
+  storage: number;
+  popCap: number;
+  /** fraction bonus HP for newly trained soldiers */
+  soldierHp: number;
+}
+
+export interface RoomDef {
+  id: RoomId;
+  icon: string;
+  color: number;
+  max: number;
+  minNestLevel: number;
+  /** cost to build (level 0) or to go from `level` to `level + 1` */
+  cost: (level: number) => Cost;
+  perLevel: Partial<Mods>;
+}
+
+export const ROOMS: Record<RoomId, RoomDef> = {
+  farm: {
+    id: 'farm',
+    icon: '🍄',
+    color: 0x8a6fb0,
+    max: 3,
+    minNestLevel: 1,
+    cost: (l) => ({ food: 20 + 20 * l, twigs: 30 + 20 * l }),
+    perLevel: { foodPerSec: 0.6 },
+  },
+  nursery: {
+    id: 'nursery',
+    icon: '🥚',
+    color: 0xe8d9a8,
+    max: 3,
+    minNestLevel: 1,
+    cost: (l) => ({ food: 30, twigs: 40 * (l + 1) }),
+    perLevel: { eggSpeed: 0.35 },
+  },
+  storage: {
+    id: 'storage',
+    icon: '📦',
+    color: 0xb08a55,
+    max: 3,
+    minNestLevel: 1,
+    cost: (l) => ({ twigs: 30 * (l + 1) }),
+    perLevel: { storage: 150 },
+  },
+  barracks: {
+    id: 'barracks',
+    icon: '🛡️',
+    color: 0xb5493a,
+    max: 3,
+    minNestLevel: 2,
+    cost: (l) => ({ food: 40 * (l + 1), twigs: 40 * (l + 1) }),
+    perLevel: { popCap: 4, soldierHp: 0.5 },
   },
 };

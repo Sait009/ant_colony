@@ -113,3 +113,71 @@ describe('save', () => {
     expect(deserialize(JSON.stringify({ v: 999, world: {} }))).toBeNull();
   });
 });
+
+describe('rooms', () => {
+  const rich = () => {
+    const w = createWorld(1);
+    w.res.food = 250;
+    w.res.twigs = 250;
+    return w;
+  };
+
+  it('builds a room into a free slot and pays for it', () => {
+    const w = rich();
+    expect(applyCommand(w, { type: 'buildRoom', kind: 'farm' }).ok).toBe(true);
+    expect(w.rooms).toHaveLength(1);
+    expect(w.res.food).toBeLessThan(250);
+  });
+
+  it('respects slot count and nest level requirements', () => {
+    const w = rich();
+    expect(applyCommand(w, { type: 'buildRoom', kind: 'barracks' })).toEqual({
+      ok: false,
+      reason: 'locked',
+    });
+    for (let i = 0; i < 3; i++) applyCommand(w, { type: 'buildRoom', kind: 'storage' });
+    expect(applyCommand(w, { type: 'buildRoom', kind: 'storage' })).toEqual({
+      ok: false,
+      reason: 'noSlot',
+    });
+  });
+
+  it('farm produces food and storage raises the stockpile cap', () => {
+    const w = rich();
+    w.res.food = 0;
+    w.rooms.push({ id: 900, kind: 'farm', level: 2 });
+    w.ants = [];
+    run(w, 10);
+    expect(w.res.food).toBeCloseTo(0.6 * 2 * 10, 0);
+
+    const capped = createWorld(1);
+    capped.res.twigs = 0;
+    capped.ants = [];
+    capped.rooms.push({ id: 901, kind: 'farm', level: 3 });
+    capped.res.food = 299;
+    run(capped, 10);
+    expect(capped.res.food).toBe(300);
+  });
+
+  it('upgrades a room up to its max level', () => {
+    const w = rich();
+    w.res.food = 9999;
+    w.res.twigs = 9999;
+    applyCommand(w, { type: 'buildRoom', kind: 'nursery' });
+    const id = w.rooms[0]!.id;
+    for (let i = 0; i < 5; i++) applyCommand(w, { type: 'upgradeRoom', roomId: id });
+    expect(w.rooms[0]!.level).toBe(3);
+  });
+});
+
+describe('save migration', () => {
+  it('upgrades a v1 save by adding rooms', () => {
+    const w = createWorld(3);
+    const old = JSON.parse(serialize(w));
+    old.v = 1;
+    delete old.world.rooms;
+    const loaded = deserialize(JSON.stringify(old))!;
+    expect(loaded.rooms).toEqual([]);
+    expect(loaded.version).toBe(2);
+  });
+});

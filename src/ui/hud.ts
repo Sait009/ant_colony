@@ -2,11 +2,12 @@ import { BALANCE } from '../data/balance';
 import { ANTS, UPGRADES } from '../data/defs';
 import { canAfford } from '../sim/commands';
 import type { GameEvent } from '../sim/events';
-import { popCap } from '../sim/stats';
+import { popCap, storageCap } from '../sim/stats';
 import type { Command } from '../sim/commands';
 import type { Cost, World } from '../sim/types';
 import type { Game } from '../game/game';
 import { t } from './i18n';
+import type { RoomsPanel } from './rooms';
 
 const $ = <T extends HTMLElement>(id: string): T => document.getElementById(id) as T;
 
@@ -25,7 +26,10 @@ export class Hud {
   private actions: ActionBtn[] = [];
   private acc = 0;
 
-  constructor(private readonly game: Game) {
+  constructor(
+    private readonly game: Game,
+    private readonly rooms: RoomsPanel,
+  ) {
     this.buildPanel();
     this.bindControls();
   }
@@ -60,6 +64,10 @@ export class Hud {
           `Lv ${w.upgrades[def.id] + (def.id === 'nest' ? 1 : 0)}/${def.max + (def.id === 'nest' ? 1 : 0)}`,
       });
     }
+    const roomsBtn = document.createElement('button');
+    roomsBtn.innerHTML = `<span class="n">🏛️ ${t('ui.rooms')}</span><span class="s">${t('rooms.title')}</span><span class="c">&nbsp;</span>`;
+    roomsBtn.addEventListener('click', () => this.rooms.toggle());
+    $('panel').appendChild(roomsBtn);
     this.addAction('🔧', t('action.repair.name'), {
       cmd: { type: 'repair' },
       cost: () => BALANCE.repair.cost,
@@ -98,8 +106,13 @@ export class Hud {
   }
 
   handleEvent(e: GameEvent): void {
-    if (e.type === 'toast') this.toast(t(e.key, e.params), e.level === 'danger');
-    else if (e.type === 'waveStart') {
+    if (e.type === 'toast') {
+      const params =
+        e.params && 'room' in e.params
+          ? { ...e.params, room: t(`room.${e.params.room}.name`) }
+          : e.params;
+      this.toast(t(e.key, params), e.level === 'danger');
+    } else if (e.type === 'waveStart') {
       this.toast(
         t('toast.wave', { n: e.number, max: BALANCE.winWave, dir: t(`dir.${e.dir}`) }),
         true,
@@ -124,8 +137,10 @@ export class Hud {
 
   refresh(): void {
     const w = this.game.world;
-    $('food').textContent = String(Math.floor(w.res.food));
-    $('twigs').textContent = String(Math.floor(w.res.twigs));
+    const cap = storageCap(w);
+    $('food').textContent = `${Math.floor(w.res.food)}/${cap}`;
+    $('twigs').textContent = `${Math.floor(w.res.twigs)}/${cap}`;
+    this.rooms.refresh();
     $('pop').textContent = `${w.ants.length}/${popCap(w)}`;
     const timer = w.wave.number >= BALANCE.winWave ? '' : ` · ${Math.ceil(w.wave.timer)}s`;
     $('wave').textContent = `${w.wave.number}/${BALANCE.winWave}${timer}`;

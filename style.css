@@ -63,3 +63,14 @@ button.primary:hover { background: #ffc85c; }
 .card .row { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
 .card .row button[hidden] { display: none; }
 button.ghost { background: transparent; }
+
+#rooms { position: fixed; right: 8px; bottom: 112px; width: min(340px, calc(100vw - 16px)); max-height: 55vh; overflow-y: auto;
+  background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 12px; z-index: 3; backdrop-filter: blur(4px); }
+#rooms[hidden] { display: none; }
+#rooms h3 { margin: 0 0 8px; display: flex; justify-content: space-between; font-size: 15px; }
+#rooms h3 small { color: var(--muted); font-weight: 400; }
+#rooms h4 { margin: 12px 0 6px; font-size: 13px; color: var(--muted); }
+#rooms .room { display: grid; grid-template-columns: 1fr auto; gap: 2px 8px; align-items: center; padding: 6px 0; border-bottom: 1px solid var(--line); }
+#rooms .room .d, #rooms .hint { font-size: 12px; color: var(--muted); }
+#rooms .room button { grid-row: span 2; font-size: 12px; text-align: left; }
+#rooms .room .c { color: var(--accent); display: block; }

@@ -1,6 +1,6 @@
 import { Application, Container, Graphics, Sprite, Text, TilingSprite } from 'pixi.js';
 import { BALANCE } from '../data/balance';
-import { ANTS } from '../data/defs';
+import { ANTS, ROOMS } from '../data/defs';
 import { nestRadius } from '../sim/stats';
 import type { Body, World } from '../sim/types';
 import { Camera } from './camera';
@@ -40,6 +40,10 @@ class EntityLayer<T extends { id: number }, D extends Container> {
     }
   }
 
+  get(id: number): D | undefined {
+    return this.map.get(id);
+  }
+
   clear(): void {
     for (const d of this.map.values()) d.destroy({ children: true });
     this.map.clear();
@@ -56,6 +60,7 @@ export class Renderer {
   private nodes!: EntityLayer<World['nodes'][number], Container>;
   private ants!: EntityLayer<World['ants'][number], Container>;
   private enemies!: EntityLayer<World['enemies'][number], Sprite>;
+  private rooms!: EntityLayer<World['rooms'][number], Container>;
   private nestSprite!: Sprite;
   private queen!: Sprite;
   private flag!: Sprite;
@@ -87,10 +92,40 @@ export class Renderer {
     this.flag = new Sprite(this.tex.flag);
     this.flag.anchor.set(0.5);
 
+    const roomLayer = new Container();
     const nodeLayer = new Container();
     const antLayer = new Container();
     const enemyLayer = new Container();
 
+    this.rooms = new EntityLayer(
+      roomLayer,
+      (r) => {
+        const c = new Container();
+        const base = new Sprite(this.tex.chamber);
+        base.anchor.set(0.5);
+        base.tint = ROOMS[r.kind].color;
+        const icon = new Text({ text: ROOMS[r.kind].icon, style: { fontSize: 16 } });
+        icon.anchor.set(0.5);
+        const lvl = new Text({
+          text: '',
+          style: {
+            fill: '#fff',
+            fontSize: 10,
+            fontWeight: '700',
+            stroke: { color: '#000', width: 2 },
+          },
+        });
+        lvl.anchor.set(0.5);
+        lvl.position.set(0, 20);
+        c.addChild(base, icon, lvl);
+        return c;
+      },
+      (c, r) => {
+        const lvl = c.children[2] as Text;
+        const text = `Lv${r.level}`;
+        if (lvl.text !== text) lvl.text = text;
+      },
+    );
     this.nodes = new EntityLayer(
       nodeLayer,
       (n) => this.createNode(n),
@@ -119,6 +154,7 @@ export class Renderer {
       ground,
       nodeLayer,
       this.nestSprite,
+      roomLayer,
       this.queen,
       this.flag,
       antLayer,
@@ -208,6 +244,14 @@ export class Renderer {
     this.queen.position.set(w.nest.x, w.nest.y - 2);
     this.flag.position.set(w.rally.x, w.rally.y);
 
+    this.rooms.sync(w.rooms);
+    const ringR = r + 24;
+    w.rooms.forEach((room, i) => {
+      const c = this.rooms.get(room.id);
+      if (!c) return;
+      const ang = -Math.PI / 2 + i * ((Math.PI * 2) / 7);
+      c.position.set(w.nest.x + Math.cos(ang) * ringR, w.nest.y + Math.sin(ang) * ringR);
+    });
     this.nodes.sync(w.nodes);
     this.ants.sync(w.ants);
     this.enemies.sync(w.enemies);
@@ -236,6 +280,7 @@ export class Renderer {
 
   /** Drop every sprite (call when a new world replaces the current one). */
   reset(): void {
+    this.rooms.clear();
     this.nodes.clear();
     this.ants.clear();
     this.enemies.clear();

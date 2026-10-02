@@ -5,6 +5,7 @@ export type ResourceId = 'food' | 'twigs';
 export type AntId = 'worker' | 'soldier';
 export type EnemyId = 'spider' | 'beetle' | 'wasp';
 export type UpgradeId = 'nest' | 'carry' | 'weapon';
+export type RoomId = 'farm' | 'nursery' | 'storage' | 'barracks';
 export type Cost = Partial<Record<ResourceId, number>>;
 
 export interface Body extends Vec2 {
@@ -46,6 +47,12 @@ export interface Nest extends Vec2 {
   maxHp: number;
 }
 
+export interface Room {
+  id: number;
+  kind: RoomId;
+  level: number;
+}
+
 export type GameStatus = 'playing' | 'won' | 'lost';
 
 /** Whole simulation state. Plain data only (JSON-serializable) except `events`. */
@@ -59,6 +66,7 @@ export interface World {
   res: Record<ResourceId, number>;
   upgrades: Record<UpgradeId, number>;
   nest: Nest;
+  rooms: Room[];
   rally: Vec2;
   ants: Ant[];
   enemies: Enemy[];

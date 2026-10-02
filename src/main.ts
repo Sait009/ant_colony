@@ -4,6 +4,7 @@ import { Renderer } from './render/renderer';
 import { BALANCE } from './data/balance';
 import { Hud } from './ui/hud';
 import { Overlay } from './ui/overlay';
+import { RoomsPanel } from './ui/rooms';
 
 async function main(): Promise<void> {
   const game = new Game();
@@ -11,7 +12,7 @@ async function main(): Promise<void> {
   await renderer.init();
   const cam = renderer.camera;
 
-  const hud = new Hud(game);
+  const hud = new Hud(game, new RoomsPanel(game));
   const overlay = new Overlay(
     {
       onNew: () => start(() => game.newGame()),

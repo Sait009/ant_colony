@@ -2,6 +2,7 @@ import { dist } from '../../core/math';
 import { BALANCE } from '../../data/balance';
 import { ANTS } from '../../data/defs';
 import { moveToward } from '../movement';
+import { addResource } from '../resources';
 import { carryCap, nestRadius } from '../stats';
 import type { Ant, ResourceNode, World } from '../types';
 import type { TickContext } from './context';
@@ -29,7 +30,7 @@ function updateGatherer(w: World, a: Ant, dt: number, ctx: TickContext): void {
 
   if (a.carry > 0 && a.carryType) {
     if (moveToward(a, w.nest.x, w.nest.y, speed, dt, nestRadius(w) * 0.7)) {
-      w.res[a.carryType] += a.carry;
+      addResource(w, a.carryType, a.carry);
       w.events.push({
         type: 'float',
         x: a.x,

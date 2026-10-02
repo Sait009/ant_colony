@@ -12,6 +12,7 @@ export interface TextureSet {
   enemy: Record<'spider' | 'beetle' | 'wasp', [Texture, Texture]>;
   node: Record<'food' | 'twigs', Texture>;
   carry: Texture;
+  chamber: Texture;
   ring: Texture;
   flag: Texture;
 }
@@ -141,6 +142,9 @@ export function buildTextures(r: Renderer): TextureSet {
         }
       }),
     },
+    chamber: bake(r, 18, (g) => {
+      g.circle(0, 0, 16).fill(0xffffff).stroke({ width: 3, color: 0x3a2a18 });
+    }),
     carry: bake(r, 4, (g) => g.circle(0, 0, 3).fill(0xffffff)),
     ring: bake(r, 22, (g) => {
       for (let i = 0; i < 12; i++) {

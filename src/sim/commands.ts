@@ -1,8 +1,8 @@
 import { clamp, type Vec2 } from '../core/math';
 import { BALANCE } from '../data/balance';
-import { ANTS, UPGRADES } from '../data/defs';
-import { nestLevel, popCap } from './stats';
-import type { AntId, Cost, UpgradeId, World } from './types';
+import { ANTS, ROOMS, UPGRADES } from '../data/defs';
+import { nestLevel, popCap, roomSlots } from './stats';
+import type { AntId, Cost, RoomId, UpgradeId, World } from './types';
 import { spawnAnt } from './world';
 
 /** Every player intent goes through a command: easy to validate, record, replay and sync later. */
@@ -10,6 +10,8 @@ export type Command =
   | { type: 'spawnAnt'; ant: AntId }
   | { type: 'buyUpgrade'; id: UpgradeId }
   | { type: 'repair' }
+  | { type: 'buildRoom'; kind: RoomId }
+  | { type: 'upgradeRoom'; roomId: number }
   | { type: 'setRally'; pos: Vec2 }
   | { type: 'toggleMark'; nodeId: number };
 
@@ -17,7 +19,15 @@ export type CommandResult =
   | { ok: true }
   | {
       ok: false;
-      reason: 'notPlaying' | 'noResources' | 'popCap' | 'maxLevel' | 'notFound' | 'full';
+      reason:
+        | 'notPlaying'
+        | 'noResources'
+        | 'popCap'
+        | 'maxLevel'
+        | 'notFound'
+        | 'full'
+        | 'noSlot'
+        | 'locked';
     };
 
 export const canAfford = (w: World, c: Cost): boolean =>
@@ -71,6 +81,30 @@ export function applyCommand(w: World, cmd: Command): CommandResult {
       if (!canAfford(w, BALANCE.repair.cost)) return fail(w, 'noResources');
       pay(w, BALANCE.repair.cost);
       w.nest.hp = Math.min(w.nest.maxHp, w.nest.hp + BALANCE.repair.amount);
+      w.events.push({ type: 'sfx', id: 'upgrade' });
+      return { ok: true };
+    }
+    case 'buildRoom': {
+      const def = ROOMS[cmd.kind];
+      if (nestLevel(w) < def.minNestLevel) return fail(w, 'locked');
+      if (w.rooms.length >= roomSlots(w)) return fail(w, 'noSlot');
+      const cost = def.cost(0);
+      if (!canAfford(w, cost)) return fail(w, 'noResources');
+      pay(w, cost);
+      w.rooms.push({ id: w.nextId++, kind: cmd.kind, level: 1 });
+      w.events.push({ type: 'toast', key: 'toast.roomBuilt', params: { room: cmd.kind } });
+      w.events.push({ type: 'sfx', id: 'upgrade' });
+      return { ok: true };
+    }
+    case 'upgradeRoom': {
+      const room = w.rooms.find((r) => r.id === cmd.roomId);
+      if (!room) return fail(w, 'notFound');
+      const def = ROOMS[room.kind];
+      if (room.level >= def.max) return fail(w, 'maxLevel');
+      const cost = def.cost(room.level);
+      if (!canAfford(w, cost)) return fail(w, 'noResources');
+      pay(w, cost);
+      room.level++;
       w.events.push({ type: 'sfx', id: 'upgrade' });
       return { ok: true };
     }

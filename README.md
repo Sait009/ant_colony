@@ -1,14 +1,42 @@
 # Ant Colony – Web
 
-เกมวางแผนอาณาจักรมดบนเว็บ (HTML + CSS + JavaScript ล้วน ไม่ต้อง build) ได้แรงบันดาลใจจาก Ant Colony: Wild Forest
+เกมวางแผนอาณาจักรมดบนเว็บ แรงบันดาลใจจาก Ant Colony: Wild Forest
+Stack: **TypeScript + PixiJS 8 + Vite + Vitest**
 
-## วิธีรัน
-เปิด `index.html` ในเบราว์เซอร์ได้เลย หรือ `python3 -m http.server` แล้วเข้า http://localhost:8000
+## คำสั่ง
+```bash
+npm install
+npm run dev        # dev server
+npm run build      # typecheck + build ไป dist/ (โฮสต์เป็นไฟล์สถิตได้)
+npm test           # unit test ของ sim
+npm run lint
+```
 
-## วิธีเล่น
-- ผู้งานเก็บ 🍓อาหาร / 🪵กิ่งไม้ อัตโนมัติ — คลิกทรัพยากรเพื่อปักหมุดให้เก็บก่อน
-- คลิกพื้นที่ว่างเพื่อตั้งจุดรวมพลของทหาร
-- ใช้ทรัพยากรสร้างมด ขยายรัง และอัปเกรด
-- ป้องกันรังให้รอดครบ 10 คลื่น
+## สถาปัตยกรรม
+```
+src/
+  sim/      logic เกมล้วน ไม่แตะ DOM/Pixi — deterministic (seeded RNG, fixed 30Hz tick)
+    types.ts      World = plain data (serialize ได้)
+    commands.ts   ทุก action ของผู้เล่นเป็น Command → ตรวจสอบ/replay/sync ได้
+    systems/      economy, gather, combat, waves (เพิ่มระบบใหม่ = เพิ่มไฟล์ + เรียกใน step.ts)
+    spatial.ts    grid hash สำหรับ query ศัตรู/มดใกล้เคียง
+    events.ts     sim → host (toast, sfx, float text)
+  data/     balance.ts + defs.ts: มด/ศัตรู/อัปเกรด/ทรัพยากรแบบ data-driven
+  render/   PixiJS: renderer, camera, textures (procedural → สลับเป็น atlas จริงได้ที่ textures.ts)
+  input/    pointer/keyboard → camera + onTap
+  ui/       HUD/overlay (DOM) + i18n (th)
+  audio/    AudioManager (WebAudio ชั่วคราว → สลับเป็น sample ได้)
+  save/     serialize + migrations + SaveStorage (localStorage → cloud ภายหลัง)
+  game/     Game: loop, pause/speed, autosave, event fan-out
+tests/      vitest
+```
+กฎสำคัญ: `sim/` ห้าม import จาก `render/ ui/ audio/ game/` และห้ามใช้ `Math.random()` (ใช้ `core/rng`)
 
-ปรับบาลานซ์ได้ที่ `CFG` / `ENEMY` ใน `js/game.js`
+## Roadmap
+1. ✅ รากฐาน TS + Pixi + save + test (เฟสนี้)
+2. ห้อง/โครงสร้างในรัง
+3. ต้นไม้เทคโนโลยี + มดหลายชนิด
+4. Pheromone / pathfinding
+5. แผนที่ + ภารกิจ + ภาคผจญภัย
+6. Sprite/เสียงจริง (asset loader)
+7. Backend: บัญชี + leaderboard + cloud save

@@ -1,44 +1,41 @@
 <!doctype html>
 <html lang="th">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-  <title>Ant Colony – Wild Forest (Web)</title>
-  <link rel="stylesheet" href="style.css">
-</head>
-<body>
-  <canvas id="game"></canvas>
-
-  <header id="hud">
-    <div class="stat" title="อาหาร">🍓 <b id="food">0</b></div>
-    <div class="stat" title="กิ่งไม้">🪵 <b id="twigs">0</b></div>
-    <div class="stat" title="ประชากร / ที่รองรับ">🐜 <b id="pop">0/0</b></div>
-    <div class="stat" title="คลื่นศัตรู">🌊 <b id="wave">-</b></div>
-    <div class="hp" title="พลังชีวิตรัง"><i id="hpbar"></i><span id="hptext"></span></div>
-    <div class="ctrl">
-      <button id="btnPause" title="หยุด (Space)">⏸</button>
-      <button id="btnSpeed" title="ความเร็ว">1×</button>
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"
+    />
+    <link rel="icon" href="data:," />
+    <title>Ant Colony – Wild Forest (Web)</title>
+    <link rel="stylesheet" href="/style.css" />
+  </head>
+  <body>
+    <header id="hud">
+      <div class="stat" id="stat-food">🍓 <b id="food">0</b></div>
+      <div class="stat" id="stat-twigs">🪵 <b id="twigs">0</b></div>
+      <div class="stat">🐜 <b id="pop">0/0</b></div>
+      <div class="stat">🌊 <b id="wave">-</b></div>
+      <div class="hp"><i id="hpbar"></i><span id="hptext"></span></div>
+      <div class="ctrl">
+        <button id="btnMute" title="เสียง">🔊</button>
+        <button id="btnPause" title="หยุด (Space)">⏸</button>
+        <button id="btnSpeed" title="ความเร็ว">1×</button>
+      </div>
+    </header>
+    <div id="toasts"></div>
+    <footer id="panel"></footer>
+    <div id="overlay">
+      <div class="card">
+        <h1 id="ovTitle"></h1>
+        <p id="ovDesc"></p>
+        <ul id="ovHelp"></ul>
+        <div class="row">
+          <button id="btnContinue" class="primary" hidden></button>
+          <button id="btnStart" class="primary"></button>
+        </div>
+      </div>
     </div>
-  </header>
-
-  <div id="toasts"></div>
-
-  <footer id="panel"></footer>
-
-  <div id="overlay">
-    <div class="card">
-      <h1 id="ovTitle">🐜 Ant Colony</h1>
-      <p id="ovDesc">สร้างอาณาจักรมด เก็บอาหาร ขยายรัง และป้องกันป่าจากศัตรู</p>
-      <ul id="ovHelp">
-        <li><b>คลิกพื้นที่ว่าง</b> = ตั้งจุดรวมพลของทหาร</li>
-        <li><b>คลิกอาหาร/กิ่งไม้</b> = ให้ผู้งานไปเก็บก่อน</li>
-        <li><b>ลาก</b> = เลื่อนกล้อง · <b>ล้อเมาส์/ถอยนิ้ว</b> = ซูม · <b>WASD</b> = เลื่อน</li>
-        <li>ป้องกันรังให้รอด <b id="winWave">10</b> คลื่น</li>
-      </ul>
-      <button id="btnStart" class="primary">เริ่มเกม</button>
-    </div>
-  </div>
-
-  <script src="js/game.js"></script>
-</body>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
 </html>

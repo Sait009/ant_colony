@@ -11,7 +11,7 @@
 * { box-sizing: border-box; }
 html, body { margin: 0; height: 100%; overflow: hidden; background: var(--bg); color: var(--text);
   font: 15px/1.4 system-ui, -apple-system, "Noto Sans Thai", sans-serif; touch-action: none; user-select: none; }
-#game { position: fixed; inset: 0; width: 100%; height: 100%; display: block; cursor: crosshair; }
+#game { display: none; }
 
 #hud { position: fixed; top: 8px; left: 8px; right: 8px; display: flex; flex-wrap: wrap; gap: 8px; align-items: center;
   pointer-events: none; }
@@ -57,3 +57,9 @@ button.primary:hover { background: #ffc85c; }
   .hp { width: 120px; }
   #panel button { min-width: 92px; }
 }
+
+#game-canvas, canvas { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
+#hud, #panel, #toasts, #overlay { z-index: 2; }
+.card .row { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+.card .row button[hidden] { display: none; }
+button.ghost { background: transparent; }

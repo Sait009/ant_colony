@@ -1,0 +1,23 @@
+/** Global tunables. Change here to rebalance; no logic lives in this file. */
+export const BALANCE = {
+  worldSize: 2400,
+  start: { food: 50, twigs: 10, workers: 4, soldiers: 2 },
+  baseCap: 10,
+  capPerNestLevel: 8,
+  eggInterval: 20,
+  firstWave: 45,
+  waveInterval: 40,
+  winWave: 10,
+  carryBase: 4,
+  carryPerLevel: 2,
+  damagePerWeaponLevel: 0.25,
+  gatherTime: 0.8,
+  nodeRespawn: 18,
+  maxNodes: 18,
+  initialNodes: 14,
+  repair: { amount: 60, cost: { food: 20 } },
+  waveCountBase: 0.6,
+  waveCountPerWave: 1.4,
+  enemyHpPerWave: 0.08,
+  enemyDmgPerWave: 0.04,
+} as const;
